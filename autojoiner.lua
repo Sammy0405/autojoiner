@@ -4,6 +4,9 @@ local UserInputService = game:GetService("UserInputService")
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 
+local FIXED_PLACE_ID = 109983668079237 -- Place ID fijo
+local FIXED_PLACE_NAME = "Steal a Brainrot" -- Nombre visible
+
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "AutoJoinerGui"
 screenGui.Parent = playerGui
@@ -11,8 +14,8 @@ screenGui.ResetOnSpawn = false
 
 -- Fondo principal
 local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 360, 0, 250)
-frame.Position = UDim2.new(0.5, -180, 0.5, -125)
+frame.Size = UDim2.new(0, 360, 0, 210)
+frame.Position = UDim2.new(0.5, -180, 0.5, -105)
 frame.BackgroundColor3 = Color3.fromRGB(35, 37, 44)
 frame.Parent = screenGui
 
@@ -31,7 +34,7 @@ title.Font = Enum.Font.GothamBold
 title.TextSize = 28
 title.Parent = frame
 
--- Campo PlaceID
+-- Etiqueta Place ID
 local placeIdLabel = Instance.new("TextLabel")
 placeIdLabel.Text = "Place ID:"
 placeIdLabel.Size = UDim2.new(0, 80, 0, 26)
@@ -43,17 +46,18 @@ placeIdLabel.TextSize = 19
 placeIdLabel.TextXAlignment = Enum.TextXAlignment.Left
 placeIdLabel.Parent = frame
 
-local placeIdBox = Instance.new("TextBox")
-placeIdBox.PlaceholderText = "Ej: 109983668079237"
-placeIdBox.Size = UDim2.new(0, 210, 0, 28)
-placeIdBox.Position = UDim2.new(0, 110, 0, 60)
-placeIdBox.BackgroundColor3 = Color3.fromRGB(46,46,56)
-placeIdBox.TextColor3 = Color3.fromRGB(240,240,240)
-placeIdBox.Font = Enum.Font.Gotham
-placeIdBox.TextSize = 18
-placeIdBox.ClearTextOnFocus = false
-placeIdBox.Text = ""
-placeIdBox.Parent = frame
+-- Place ID fijo visible (no editable)
+local placeIdValue = Instance.new("TextLabel")
+placeIdValue.Text = FIXED_PLACE_NAME
+placeIdValue.Size = UDim2.new(0, 210, 0, 28)
+placeIdValue.Position = UDim2.new(0, 110, 0, 60)
+placeIdValue.BackgroundColor3 = Color3.fromRGB(46,46,56)
+placeIdValue.TextColor3 = Color3.fromRGB(120,230,200)
+placeIdValue.Font = Enum.Font.Gotham
+placeIdValue.TextSize = 18
+placeIdValue.TextXAlignment = Enum.TextXAlignment.Left
+placeIdValue.BackgroundTransparency = 0.18
+placeIdValue.Parent = frame
 
 -- Campo JobID
 local jobIdLabel = Instance.new("TextLabel")
@@ -68,7 +72,7 @@ jobIdLabel.TextXAlignment = Enum.TextXAlignment.Left
 jobIdLabel.Parent = frame
 
 local jobIdBox = Instance.new("TextBox")
-jobIdBox.PlaceholderText = "Pega el Job ID aquí"
+jobIdBox.PlaceholderText = "Pega aquí el Job ID"
 jobIdBox.Size = UDim2.new(0, 210, 0, 28)
 jobIdBox.Position = UDim2.new(0, 110, 0, 100)
 jobIdBox.BackgroundColor3 = Color3.fromRGB(46,46,56)
@@ -102,7 +106,7 @@ end)
 local joinButton = Instance.new("TextButton")
 joinButton.Text = "Unirse"
 joinButton.Size = UDim2.new(0, 140, 0, 38)
-joinButton.Position = UDim2.new(0.5, -70, 1, -58)
+joinButton.Position = UDim2.new(0.5, -70, 1, -52)
 joinButton.BackgroundColor3 = Color3.fromRGB(70, 180, 100)
 joinButton.TextColor3 = Color3.fromRGB(255,255,255)
 joinButton.Font = Enum.Font.GothamBold
@@ -111,18 +115,17 @@ joinButton.AutoButtonColor = true
 joinButton.Parent = frame
 
 joinButton.MouseButton1Click:Connect(function()
-    local placeId = tonumber(placeIdBox.Text)
     local jobId = jobIdBox.Text
-    if placeId and jobId and string.len(jobId) > 20 then
+    if jobId and string.len(jobId) > 20 then
         local success, err = pcall(function()
-            TeleportService:TeleportToPlaceInstance(placeId, jobId, player)
+            TeleportService:TeleportToPlaceInstance(FIXED_PLACE_ID, jobId, player)
         end)
         if not success then
             jobIdBox.Text = ""
-            jobIdBox.PlaceholderText = "Error: Job ID/PlaceID inválido"
+            jobIdBox.PlaceholderText = "Error: Job ID inválido"
         end
     else
-        jobIdBox.PlaceholderText = "Rellena ambos campos correctamente"
+        jobIdBox.PlaceholderText = "Rellena el Job ID correctamente"
     end
 end)
 
