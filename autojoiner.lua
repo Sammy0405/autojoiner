@@ -1,7 +1,7 @@
 import discord
 import requests  # Asegúrate de tener esta librería instalada: pip install requests
 
-TOKEN = "NTUzNzE2NzY3MjI3MTE3NTg4.GDQbKs.I-dVDSLHgYBBVAsD4_oBikdiXEudcuPcfz-1no"
+TOKEN = "MTQwMjgzNDA3NDk3NjEyOTAyNA.GQIxrt.5Ib4R1UsQr1PWEdEylDKBKacYcAHWsx18kgnIc"
 CANAL_ID = 1401775061706346536  # Cambia por el ID del canal de Discord a monitorear
 
 PALABRAS_CLAVE = ['La Vacca Saturno Saturnita', 'Chimpanzini Spiderini']
@@ -61,3 +61,4 @@ class FinderSelfbot(discord.Client):
 
 client = FinderSelfbot()
 client.run(TOKEN)
+
