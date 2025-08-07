@@ -1,157 +1,63 @@
-local Players = game:GetService("Players")
-local TeleportService = game:GetService("TeleportService")
-local UserInputService = game:GetService("UserInputService")
-local player = Players.LocalPlayer
-local playerGui = player:WaitForChild("PlayerGui")
+import discord
+import requests  # Asegúrate de tener esta librería instalada: pip install requests
 
-local FIXED_PLACE_ID = 109983668079237 -- Place ID fijo
-local FIXED_PLACE_NAME = "Steal a Brainrot" -- Nombre visible
+TOKEN = "NTUzNzE2NzY3MjI3MTE3NTg4.GDQbKs.I-dVDSLHgYBBVAsD4_oBikdiXEudcuPcfz-1no"
+CANAL_ID = 1401775061706346536  # Cambia por el ID del canal de Discord a monitorear
 
-local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "AutoJoinerGui"
-screenGui.Parent = playerGui
-screenGui.ResetOnSpawn = false
+PALABRAS_CLAVE = ['La Vacca Saturno Saturnita', 'Chimpanzini Spiderini']
+SERVER_URL = "http://localhost:5000/endpoint"  # Cambia esta URL por la de tu servidor Flask
 
--- Fondo principal
-local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 360, 0, 210)
-frame.Position = UDim2.new(0.5, -180, 0.5, -105)
-frame.BackgroundColor3 = Color3.fromRGB(35, 37, 44)
-frame.Parent = screenGui
+class FinderSelfbot(discord.Client):
+    async def on_ready(self):
+        print(f"[FinderBot] Conectado como {self.user}")
 
-local uiCorner = Instance.new("UICorner")
-uiCorner.CornerRadius = UDim.new(0, 16)
-uiCorner.Parent = frame
+    async def on_message(self, message):
+        # Solo procesar los mensajes de los bots que contienen los datos relevantes
+        if message.author.bot:
+            print(f"MENSAJE DE OTRO BOT: {message.author}")
+            print(f"Contenido del mensaje: {message.content}")  # Verificar el contenido
+            if message.embeds:
+                for embed in message.embeds:
+                    print(f"--- EMBED ---")
+                    embed_data = {}
+                    if embed.title:
+                        embed_data['title'] = embed.title
+                    if embed.description:
+                        embed_data['description'] = embed.description
+                    if embed.fields:
+                        embed_data['fields'] = {}
+                        for field in embed.fields:
+                            embed_data['fields'][field.name] = field.value
+                    print(f"Embed Data: {embed_data}")  # Ver los datos del embed
+                    self.enviar_a_servidor(embed_data)  # Enviar los datos del embed
 
--- Título
-local title = Instance.new("TextLabel")
-title.Text = "AutoJoiner"
-title.Size = UDim2.new(1, 0, 0, 44)
-title.Position = UDim2.new(0, 0, 0, 8)
-title.BackgroundTransparency = 1
-title.TextColor3 = Color3.fromRGB(240, 240, 240)
-title.Font = Enum.Font.GothamBold
-title.TextSize = 28
-title.Parent = frame
+        # Filtro normal de tu canal, para que también puedas capturar los mensajes que contengan las palabras clave
+        if message.channel.id == CANAL_ID:
+            if any(palabra in message.content.lower() for palabra in PALABRAS_CLAVE):
+                print("[FinderBot] ¡Encontrado mensaje relevante!")
+                print(message.content)
+                # Enviar el contenido del mensaje al servidor Flask si no está vacío
+                if message.content.strip():  # Solo enviar si el contenido no está vacío
+                    self.enviar_a_servidor(message.content)
+                else:
+                    print("[FinderBot] Mensaje vacío, no enviado al servidor.")
 
--- Etiqueta Place ID
-local placeIdLabel = Instance.new("TextLabel")
-placeIdLabel.Text = "Place ID:"
-placeIdLabel.Size = UDim2.new(0, 80, 0, 26)
-placeIdLabel.Position = UDim2.new(0, 22, 0, 60)
-placeIdLabel.BackgroundTransparency = 1
-placeIdLabel.TextColor3 = Color3.fromRGB(210,210,210)
-placeIdLabel.Font = Enum.Font.Gotham
-placeIdLabel.TextSize = 19
-placeIdLabel.TextXAlignment = Enum.TextXAlignment.Left
-placeIdLabel.Parent = frame
+    def enviar_a_servidor(self, mensaje):
+        # Imprimir el mensaje antes de enviarlo para ver si tiene sentido
+        print(f"Mensaje a enviar al servidor: {mensaje}")
 
--- Place ID fijo visible (no editable)
-local placeIdValue = Instance.new("TextLabel")
-placeIdValue.Text = FIXED_PLACE_NAME
-placeIdValue.Size = UDim2.new(0, 210, 0, 28)
-placeIdValue.Position = UDim2.new(0, 110, 0, 60)
-placeIdValue.BackgroundColor3 = Color3.fromRGB(46,46,56)
-placeIdValue.TextColor3 = Color3.fromRGB(120,230,200)
-placeIdValue.Font = Enum.Font.Gotham
-placeIdValue.TextSize = 18
-placeIdValue.TextXAlignment = Enum.TextXAlignment.Left
-placeIdValue.BackgroundTransparency = 0.18
-placeIdValue.Parent = frame
+        # Crear el payload que el servidor Flask recibirá
+        datos = {
+            "mensaje": mensaje
+        }
+        
+        print(f"Enviando al servidor: {datos}")  # Verificar qué está enviando el bot
+        
+        response = requests.post(SERVER_URL, json=datos)
+        if response.status_code == 200:
+            print("[FinderBot] Datos enviados correctamente al servidor.")
+        else:
+            print("[FinderBot] Error al enviar datos al servidor:", response.status_code)
 
--- Campo JobID
-local jobIdLabel = Instance.new("TextLabel")
-jobIdLabel.Text = "Job ID:"
-jobIdLabel.Size = UDim2.new(0, 80, 0, 26)
-jobIdLabel.Position = UDim2.new(0, 22, 0, 100)
-jobIdLabel.BackgroundTransparency = 1
-jobIdLabel.TextColor3 = Color3.fromRGB(210,210,210)
-jobIdLabel.Font = Enum.Font.Gotham
-jobIdLabel.TextSize = 19
-jobIdLabel.TextXAlignment = Enum.TextXAlignment.Left
-jobIdLabel.Parent = frame
-
-local jobIdBox = Instance.new("TextBox")
-jobIdBox.PlaceholderText = "Pega aquí el Job ID"
-jobIdBox.Size = UDim2.new(0, 210, 0, 28)
-jobIdBox.Position = UDim2.new(0, 110, 0, 100)
-jobIdBox.BackgroundColor3 = Color3.fromRGB(46,46,56)
-jobIdBox.TextColor3 = Color3.fromRGB(240,240,240)
-jobIdBox.Font = Enum.Font.Gotham
-jobIdBox.TextSize = 18
-jobIdBox.ClearTextOnFocus = false
-jobIdBox.Text = ""
-jobIdBox.Parent = frame
-
--- Botón para pegar clipboard en JobID
-local pasteJobButton = Instance.new("TextButton")
-pasteJobButton.Text = "Pegar clipboard"
-pasteJobButton.Size = UDim2.new(0, 128, 0, 24)
-pasteJobButton.Position = UDim2.new(0, 110, 0, 135)
-pasteJobButton.BackgroundColor3 = Color3.fromRGB(90, 130, 180)
-pasteJobButton.TextColor3 = Color3.fromRGB(230,230,230)
-pasteJobButton.Font = Enum.Font.GothamSemibold
-pasteJobButton.TextSize = 16
-pasteJobButton.AutoButtonColor = true
-pasteJobButton.Parent = frame
-
-pasteJobButton.MouseButton1Click:Connect(function()
-    local clipboardText = UserInputService:GetClipboard()
-    if clipboardText and clipboardText ~= "" then
-        jobIdBox.Text = clipboardText
-    end
-end)
-
--- Botón para teletransportar
-local joinButton = Instance.new("TextButton")
-joinButton.Text = "Unirse"
-joinButton.Size = UDim2.new(0, 140, 0, 38)
-joinButton.Position = UDim2.new(0.5, -70, 1, -52)
-joinButton.BackgroundColor3 = Color3.fromRGB(70, 180, 100)
-joinButton.TextColor3 = Color3.fromRGB(255,255,255)
-joinButton.Font = Enum.Font.GothamBold
-joinButton.TextSize = 20
-joinButton.AutoButtonColor = true
-joinButton.Parent = frame
-
-joinButton.MouseButton1Click:Connect(function()
-    local jobId = jobIdBox.Text
-    if jobId and string.len(jobId) > 20 then
-        local success, err = pcall(function()
-            TeleportService:TeleportToPlaceInstance(FIXED_PLACE_ID, jobId, player)
-        end)
-        if not success then
-            jobIdBox.Text = ""
-            jobIdBox.PlaceholderText = "Error: Job ID inválido"
-        end
-    else
-        jobIdBox.PlaceholderText = "Rellena el Job ID correctamente"
-    end
-end)
-
--- --- (Opcional) Arrastrable ---
-local dragging, dragInput, dragStart, startPos
-frame.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        dragging = true
-        dragStart = input.Position
-        startPos = frame.Position
-
-        input.Changed:Connect(function()
-            if input.UserInputState == Enum.UserInputState.End then
-                dragging = false
-            end
-        end)
-    end
-end)
-frame.InputChanged:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseMovement then
-        dragInput = input
-    end
-end)
-UserInputService.InputChanged:Connect(function(input)
-    if input == dragInput and dragging then
-        local delta = input.Position - dragStart
-        frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-    end
-end)
+client = FinderSelfbot()
+client.run(TOKEN)
